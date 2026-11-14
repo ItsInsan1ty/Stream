@@ -1,0 +1,30 @@
+{
+  "name": "CinemaOS for Nuvio",
+  "version": "0.1.0",
+  "scrapers": [
+    {
+      "id": "cinemaos",
+      "name": "CinemaOS (experimental)",
+      "description": "Experimental integration scaffold; no stream resolver configured yet.",
+      "version": "0.1.0",
+      "author": "ItsInsan1ty",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/cinemaos.js",
+      "enabled": false,
+      "formats": [
+        "mp4",
+        "hls",
+        "m3u8"
+      ],
+      "contentLanguage": [
+        "en",
+        "hi"
+      ],
+      "limited": true,
+      "disabledPlatforms": []
+    }
+  ]
+}
