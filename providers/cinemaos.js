@@ -1,19 +1,24 @@
-
 /**
- * CinemaOS-compatible Nuvio provider
+ * CinemaOS Unified provider for Nuvio.
  *
- * Connects to an authorized API that returns playable stream URLs.
- * This is an adapter template, not a CinemaOS stream extractor.
+ * One Nuvio scraper entry aggregates supported, authorized sources
+ * returned by the configured backend. This file does not extract URLs
+ * from third-party apps or bypass provider access controls.
  */
 
 var API_BASE = "https://YOUR-AUTHORIZED-API-DOMAIN.com";
 
-function getStreams(tmdbId, mediaType, season, episode) {
-  if (API_BASE.indexOf("YOUR-AUTHORIZED") !== -1) {
-    console.log("[CinemaOS] API endpoint not configured.");
-    return Promise.resolve([]);
-  }
+var SOURCE_LABELS = {
+  moviebox: "MovieBox",
+  movy: "Movy",
+  castle: "Castle",
+  febbox: "Febbox",
+  hdhub: "HDHub",
+  vega: "Vega",
+  abyss: "Abyss"
+};
 
+function makeRequestUrl(tmdbId, mediaType, season, episode) {
   var params = [
     "tmdbId=" + encodeURIComponent(tmdbId),
     "type=" + encodeURIComponent(mediaType)
@@ -24,37 +29,49 @@ function getStreams(tmdbId, mediaType, season, episode) {
     params.push("episode=" + encodeURIComponent(episode));
   }
 
-  var url = API_BASE + "/streams?" + params.join("&");
+  return API_BASE.replace(/\/$/, "") + "/streams?" + params.join("&");
+}
 
-  return fetch(url)
+function normalizeStreams(payload) {
+  var items = Array.isArray(payload) ? payload : payload && payload.streams;
+  if (!Array.isArray(items)) return [];
+
+  return items.filter(function (item) {
+    return item &&
+      typeof item.url === "string" &&
+      /^https?:\/\//i.test(item.url);
+  }).map(function (item) {
+    var source = String(item.source || "cinemaos").toLowerCase();
+    var label = SOURCE_LABELS[source] || "CinemaOS";
+
+    return {
+      name: label,
+      title: item.title || item.quality || label,
+      url: item.url,
+      quality: item.quality || "Unknown",
+      type: item.type || "",
+      headers: item.headers || {},
+      subtitles: Array.isArray(item.subtitles) ? item.subtitles : []
+    };
+  });
+}
+
+function getStreams(tmdbId, mediaType, season, episode) {
+  if (API_BASE.indexOf("YOUR-AUTHORIZED-API-DOMAIN") !== -1) {
+    console.log("[CinemaOS Unified] Configure an authorized API URL first.");
+    return Promise.resolve([]);
+  }
+
+  return fetch(makeRequestUrl(tmdbId, mediaType, season, episode))
     .then(function (response) {
       if (!response.ok) {
-        throw new Error("API returned " + response.status);
+        throw new Error("Backend returned HTTP " + response.status);
       }
       return response.json();
     })
-    .then(function (data) {
-      var streams = Array.isArray(data) ? data : data.streams;
-
-      if (!Array.isArray(streams)) return [];
-
-      return streams
-        .filter(function (stream) {
-          return stream && typeof stream.url === "string" &&
-            /^https?:\/\//i.test(stream.url);
-        })
-        .map(function (stream) {
-          return {
-            name: "CinemaOS",
-            title: stream.title || stream.quality || "Available stream",
-            url: stream.url,
-            quality: stream.quality || "Unknown",
-            headers: stream.headers || {}
-          };
-        });
-    })
+    .then(normalizeStreams)
     .catch(function (error) {
-      console.log("[CinemaOS] " + error.message);
+      console.log("[CinemaOS Unified] " + error.message);
       return [];
     });
 }
