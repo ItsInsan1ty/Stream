@@ -1,26 +1,44 @@
-# CinemaOS for Nuvio
+# CinemaOS Unified for Nuvio
 
-Experimental Nuvio plugin repository for investigating a compatible CinemaOS integration.
+A single Nuvio JavaScript scraper entry that can display streams from multiple supported, authorized sources returned by a configured backend.
 
-## Nuvio repository manifest URL
+## Install in Nuvio
+
+Add this repository manifest URL in **Profile → Content & Discovery → Plugins**:
 
 `https://raw.githubusercontent.com/ItsInsan1ty/Stream/main/manifest.json`
 
-**Status:** This is a scaffold only. The provider is disabled and returns an empty stream list. It is not ready for playback.
+## Current status
 
-## Progress
+- [x] One unified Nuvio scraper entry
+- [x] Normalizes streams from multiple source labels
+- [x] Supports movie and TV lookup parameters
+- [x] Passes through stream quality, headers, and subtitle metadata
+- [ ] Configure a live authorized backend URL
+- [ ] Verify real streams and playback in Nuvio
 
-- [x] Add Nuvio plugin manifest using the `scrapers` registry format.
-- [x] Add provider module scaffold.
-- [ ] Verify a documented and authorized CinemaOS provider/API interface.
-- [ ] Implement and test movie and TV stream resolution.
-- [ ] Verify subtitles, headers, and playback formats.
-- [ ] Assess separate addon support for catalogs, metadata, anime discovery, and live-TV listings.
+## Backend response contract
 
-## Notes
+The provider expects the configured backend to return JSON in this shape:
 
-The supplied CinemaOS APK is a compiled React Native/Expo application. Strings and service references found in an APK do not by themselves establish working API contracts or permission to reproduce third-party stream extraction.
+```json
+{
+  "streams": [
+    {
+      "source": "movy",
+      "title": "1080p",
+      "quality": "1080p",
+      "type": "hls",
+      "url": "https://authorized-provider.example/video.m3u8",
+      "headers": {},
+      "subtitles": []
+    }
+  ]
+}
+```
 
-Nuvio plugins provide streams. Catalog and metadata functionality may require a separate Stremio-compatible addon or service.
+The backend URL is intentionally a placeholder in `providers/cinemaos.js` until a working, authorized API is available. The example URL above is illustrative, not playable.
 
-Only integrate services and streams you are authorized to access. This repository does not host media.
+## Important
+
+The APK is compiled application code. Provider names and URL strings found in it do not establish complete API contracts or permission to reproduce third-party extraction. This repository does not host media and does not bypass DRM, authentication, anti-bot systems, or provider restrictions.
